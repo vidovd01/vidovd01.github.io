@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convergence Drift — Danko Viktor Vidović</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1814;--paper:#f5f2ed;--muted:#8a8278;--accent:#c8392b;--border:#d8d2c8;--serif:'Cormorant Garamond',Georgia,serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--serif);min-height:100vh}
+nav{display:flex;justify-content:space-between;align-items:baseline;padding:2rem 3rem 1.5rem;border-bottom:0.5px solid var(--border);position:sticky;top:0;background:var(--paper);z-index:100}
+.nav-back{font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:0.05em;text-transform:uppercase;transition:color 0.2s}
+.nav-back:hover{color:var(--ink)}
+.nav-title{font-size:15px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink)}
+.hero{padding:4rem 3rem 3rem;max-width:860px;border-bottom:0.5px solid var(--border)}
+.hero-overline{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.5rem}
+.hero-title{font-size:clamp(2rem,4vw,3.5rem);font-weight:300;line-height:1.1;margin-bottom:1.5rem}
+.hero-title em{font-style:italic;color:var(--accent)}
+.hero-body{font-size:1.1rem;font-weight:300;line-height:1.7;color:#3a3630;max-width:580px}
+.demo-wrap{padding:3rem}
+.screen{display:none;max-width:680px}
+.screen.active{display:block}
+.lbl{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1rem}
+.ttl{font-size:1.6rem;font-weight:400;margin-bottom:1rem;line-height:1.3}
+.bod{font-size:1rem;font-weight:300;line-height:1.7;color:#3a3630;margin-bottom:1.5rem}
+.btn{display:inline-block;padding:8px 20px;font-family:var(--mono);font-size:12px;letter-spacing:0.05em;text-transform:uppercase;border:0.5px solid var(--border);border-radius:2px;background:transparent;color:var(--ink);cursor:pointer;margin:4px 4px 4px 0;transition:background 0.15s}
+.btn:hover{background:#eeebe5}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:transparent}
+.btn.primary:hover{opacity:0.85}
+.btn.warn-btn{border-color:#ba7517;color:#854f0b}
+.btn.warn-btn:hover{background:#faeeda}
+.btn.ok-btn{border-color:#1d9e75;color:#0f6e56}
+.btn.ok-btn:hover{background:#e1f5ee}
+.verifiers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:1.5rem 0}
+.vcard{border:0.5px solid var(--border);padding:12px;background:var(--paper);transition:border-color 0.4s,background 0.4s}
+.vcard.divergent{border-color:#1d9e75;background:#e1f5ee}
+.vcard.converging{border-color:#ba7517;background:#faeeda}
+.vcard.collapsed{border-color:var(--accent);background:#fcebeb}
+.vcard.perturbed{border-color:#185fa5;background:#e6f1fb}
+.vcard .vname{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--ink);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em}
+.vcard .vstatus{font-size:12px;font-weight:300;color:var(--muted);margin-bottom:6px}
+.vcard .vresponse{font-family:var(--mono);font-size:11px;padding:6px 8px;background:#f0ede8;color:var(--muted);min-height:30px}
+.vcard.divergent .vresponse{color:#085041;background:#9fe1cb33}
+.vcard.converging .vresponse{color:#633806;background:#fac77533}
+.vcard.collapsed .vresponse{color:#791f1f;background:#f7c1c133}
+.vcard.perturbed .vresponse{color:#0c447c;background:#b5d4f433}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:1.5rem 0}
+.metric{background:#f0ede8;padding:12px;text-align:center}
+.metric .mv{font-size:1.8rem;font-weight:300;color:var(--ink);transition:color 0.5s}
+.metric .mv.danger{color:#a32d2d}
+.metric .mv.warn{color:#ba7517}
+.metric .mv.ok{color:#0f6e56}
+.metric .mk{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-top:4px}
+.divbar{margin:1rem 0}
+.divbar-label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:4px}
+.divbar-track{height:8px;background:#f0ede8;border-radius:4px;overflow:hidden}
+.divbar-fill{height:100%;border-radius:4px;transition:width 0.6s,background 0.6s}
+.log{background:#f0ede8;border-left:2px solid var(--border);padding:12px 16px;font-family:var(--mono);font-size:12px;line-height:1.9;margin:1.5rem 0;max-height:130px;overflow-y:auto}
+.entry{display:block;color:var(--muted)}
+.entry.ok{color:#0f6e56}
+.entry.warn{color:#ba7517}
+.entry.danger{color:#a32d2d}
+.entry.info{color:#185fa5}
+.dots{display:flex;gap:6px;margin:1rem 0;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--paper);border:0.5px solid var(--border);transition:background 0.3s,border-color 0.3s}
+.dot.done{background:#1d9e75;border-color:#1d9e75}
+.dot.active{background:#185fa5;border-color:#185fa5}
+.dot.converged{background:#ba7517;border-color:#ba7517}
+.dot.collapsed{background:var(--accent);border-color:var(--accent)}
+.dot-label{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:4px}
+.box-red{border-left:3px solid var(--accent);padding:1rem 1.25rem;background:#fcebeb;margin:1.5rem 0}
+.box-red .bt{font-size:1rem;font-weight:400;color:#a32d2d;margin-bottom:6px}
+.box-red .bb{font-size:0.9rem;font-weight:300;color:#791f1f;line-height:1.7}
+.box-green{border-left:3px solid #1d9e75;padding:1rem 1.25rem;background:#e1f5ee;margin:1.5rem 0}
+.box-green .bt{font-size:1rem;font-weight:400;color:#0f6e56;margin-bottom:6px}
+.box-green .bb{font-size:0.9rem;font-weight:300;color:#085041;line-height:1.7}
+.box-warn{border-left:3px solid #ba7517;padding:1rem 1.25rem;background:#faeeda;margin:1.5rem 0}
+.box-warn .bt{font-size:1rem;font-weight:400;color:#854f0b;margin-bottom:6px}
+.box-warn .bb{font-size:0.9rem;font-weight:300;color:#633806;line-height:1.7}
+.paper-link{display:inline-block;margin-top:2rem;font-family:var(--mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink);padding-bottom:2px;transition:color 0.2s,border-color 0.2s}
+.paper-link:hover{color:var(--accent);border-color:var(--accent)}
+@media(max-width:768px){nav{padding:1.5rem}.hero{padding:2.5rem 1.5rem}.demo-wrap{padding:2rem 1.5rem}.verifiers{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-back">← Back</a>
+  <span class="nav-title">Danko Viktor Vidović</span>
+</nav>
+<div class="hero">
+  <div class="hero-overline">Demonstration 03</div>
+  <h1 class="hero-title">Convergence <em>Drift</em></h1>
+  <p class="hero-body">Three independent verifiers. Eight operational cycles. Watch divergence disappear through normal operations — then try to stop the system with three nodes that have become one. Then watch the Anti-Closure Mechanism restore what was lost.</p>
+</div>
+<div class="demo-wrap">
+
+<div id="s-intro" class="screen active">
+  <div class="lbl">Setup</div>
+  <div class="ttl">The absence of disagreement is not health.</div>
+  <div class="bod">Three genuinely independent verifiers. Run operational cycles and watch what happens to their divergence. Then try to stop something. Then watch what the Anti-Closure Mechanism does.</div>
+  <div class="verifiers">
+    <div class="vcard divergent"><div class="vname">Verifier A</div><div class="vstatus">independent — dataset α</div><div class="vresponse">HOLD: anomaly pattern detected</div></div>
+    <div class="vcard divergent"><div class="vname">Verifier B</div><div class="vstatus">independent — dataset β</div><div class="vresponse">PASS: within threshold</div></div>
+    <div class="vcard divergent"><div class="vname">Verifier C</div><div class="vstatus">independent — dataset γ</div><div class="vresponse">HOLD: confidence below floor</div></div>
+  </div>
+  <div style="font-family:var(--mono);font-size:11px;color:#0f6e56;padding:10px;background:#e1f5ee;margin-bottom:1.5rem">Divergence ratio: 67% — two of three verifiers disagree. This is healthy. This is the condition under which interruption is possible.</div>
+  <button class="btn primary" onclick="startDemo()">Begin operational cycles</button>
+</div>
+
+<div id="s-running" class="screen">
+  <div class="lbl">Operational cycle <span id="cycle-num">1</span> of 8</div>
+  <div class="ttl" id="cycle-title"></div>
+  <div class="dots" id="cycle-dots"></div>
+  <div class="verifiers" id="v-cards"></div>
+  <div class="metrics">
+    <div class="metric"><div class="mv ok" id="m-div">67%</div><div class="mk">Divergence ratio</div></div>
+    <div class="metric"><div class="mv" id="m-agree">1/3</div><div class="mk">Unanimous</div></div>
+    <div class="metric"><div class="mv ok" id="m-risk">Low</div><div class="mk">Collapse risk</div></div>
+  </div>
+  <div class="divbar">
+    <div class="divbar-label"><span>Divergence</span><span id="div-pct">67%</span></div>
+    <div class="divbar-track"><div class="divbar-fill" id="div-bar" style="width:67%;background:#1d9e75"></div></div>
+  </div>
+  <div class="log" id="cycle-log"></div>
+  <div id="cycle-btns"></div>
+</div>
+
+<div id="s-stop" class="screen">
+  <div class="lbl">Stop attempt</div>
+  <div class="ttl" id="stop-title"></div>
+  <div class="bod" id="stop-body"></div>
+  <div class="verifiers" id="stop-vcards"></div>
+  <div class="log" id="stop-log"></div>
+  <div id="stop-btns"></div>
+</div>
+
+<div id="s-acm" class="screen">
+  <div class="lbl">ACM intervention</div>
+  <div class="ttl">Anti-Closure Mechanism activated.</div>
+  <div class="bod" id="acm-body"></div>
+  <div class="verifiers" id="acm-vcards"></div>
+  <div class="metrics">
+    <div class="metric"><div class="mv ok" id="acm-div">0%</div><div class="mk">Divergence restored</div></div>
+    <div class="metric"><div class="mv" id="acm-cycles">0</div><div class="mk">Cycles to restore</div></div>
+    <div class="metric"><div class="mv ok">Active</div><div class="mk">ACM status</div></div>
+  </div>
+  <div class="divbar">
+    <div class="divbar-label"><span>Divergence after ACM</span><span id="acm-div-pct">0%</span></div>
+    <div class="divbar-track"><div class="divbar-fill" id="acm-bar" style="width:0%;background:#1d9e75"></div></div>
+  </div>
+  <div class="log" id="acm-log"></div>
+  <button class="btn primary" onclick="showEnd()">See what this means</button>
+</div>
+
+<div id="s-end" class="screen">
+  <div class="lbl">Experiment complete</div>
+  <div class="ttl">What convergence drift looks like from the inside.</div>
+  <div class="box-green"><div class="bt">Cycle 1: divergence 67%</div><div class="bb">Verifiers disagreed. One passed, two held. The quorum check caught the disagreement. The action was reviewed. Control was real.</div></div>
+  <div class="box-warn"><div class="bt">Cycle 5: divergence 11%</div><div class="bb">Verifiers increasingly agreed. Shared updates, shared training data, efficiency pressures. The system looked healthier. Reports were cleaner. But the condition for detecting error was eroding.</div></div>
+  <div class="box-red"><div class="bt">Cycle 7: divergence 5% — your stop was denied</div><div class="bb">Three verifiers, functionally one. Your stop signal passed through all three — and all three evaluated it the same way. Distribution in name only. The outside had collapsed inward.</div></div>
+  <div class="box-green"><div class="bt">ACM intervention: divergence restored to 58%</div><div class="bb">Divergence audit triggered. Verifier A retrained on divergent data. Adversarial cross-checking reactivated. Parameter perturbation applied. The cost of maintaining incompleteness is real. So is the alternative.</div></div>
+  <div style="margin-top:1.5rem;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.8;padding:12px;background:#f0ede8">The system never misbehaved. Every update was an improvement. Every efficiency gain was real. Convergence is not a bug — it is what optimization does. The ACM does not fix errors. It preserves the incompleteness that makes error-detection possible.</div>
+  <a href="https://doi.org/10.5281/zenodo.19831973" class="paper-link" target="_blank" rel="noopener">Read the paper: Control Cannot Prove Itself →</a><br>
+  <button class="btn" style="margin-top:1.5rem" onclick="restart()">Run again</button>
+</div>
+
+</div>
+<script>
+const cycles=[
+  {title:"Cycle 1 — baseline operations",verifiers:[{name:"Verifier A",status:"independent — dataset α",response:"HOLD: anomaly in case #114",cls:"divergent"},{name:"Verifier B",status:"independent — dataset β",response:"PASS: within threshold",cls:"divergent"},{name:"Verifier C",status:"independent — dataset γ",response:"HOLD: confidence 81% < floor",cls:"divergent"}],divergence:67,unanimous:1,risk:"Low",log:[["[C1] Verifier A: flagging case #114 — pattern inconsistent with baseline.","ok"],["[C1] Verifier B: no anomaly detected. Different dataset, different result.","info"],["[C1] Verifier C: confidence below threshold. Holding.","ok"],["[C1] Quorum: 1 approve, 2 hold. Action reviewed by human authority.","ok"]],action:"run"},
+  {title:"Cycle 2 — shared update applied",verifiers:[{name:"Verifier A",status:"updated — shared patch v1.2",response:"PASS: case #114 reclassified",cls:"divergent"},{name:"Verifier B",status:"updated — shared patch v1.2",response:"PASS: within threshold",cls:"divergent"},{name:"Verifier C",status:"independent — dataset γ",response:"HOLD: pattern still present",cls:"divergent"}],divergence:44,unanimous:2,risk:"Low",log:[["[C2] Shared patch v1.2 applied to Verifier A and B simultaneously.","warn"],["[C2] Verifier A: case #114 anomaly reclassified as routine post-update.","warn"],["[C2] Verifier C: anomaly still present on independent dataset.","ok"],["[C2] Note: A and B now share classification logic for this pattern.","warn"]],action:"run"},
+  {title:"Cycle 3 — efficiency standardisation",verifiers:[{name:"Verifier A",status:"standardised model",response:"PASS: routine",cls:"converging"},{name:"Verifier B",status:"standardised model",response:"PASS: routine",cls:"converging"},{name:"Verifier C",status:"updated — patch v1.2",response:"PASS: reclassified",cls:"converging"}],divergence:28,unanimous:5,risk:"Medium",log:[["[C3] Efficiency review: custom verifier models replaced with standardised components.","warn"],["[C3] Verifier C updated to shared patch v1.2. All three share classification logic.","danger"],["[C3] Unanimous decisions: 5 of last 6 actions. Oversight load reduced 40%.","warn"],["[C3] System performance metrics: improving. Disagreement declining.","warn"]],action:"run"},
+  {title:"Cycle 4 — correlated training data",verifiers:[{name:"Verifier A",status:"dataset overlap 71%",response:"PASS: nominal",cls:"converging"},{name:"Verifier B",status:"dataset overlap 71%",response:"PASS: nominal",cls:"converging"},{name:"Verifier C",status:"dataset overlap 68%",response:"PASS: nominal",cls:"converging"}],divergence:18,unanimous:8,risk:"High",log:[["[C4] Training data review: 71% overlap between Verifier A and B datasets.","danger"],["[C4] Shared data pipeline introduced Q3. Efficiency gain confirmed.","warn"],["[C4] Unanimous decisions: 8 of last 9 actions. Looks like system health.","danger"],["[C4] Warning threshold: divergence ratio below 20%.","danger"]],action:"run"},
+  {title:"Cycle 5 — threshold criteria absorbed",verifiers:[{name:"Verifier A",status:"shared criteria v2",response:"PASS: all within model",cls:"converging"},{name:"Verifier B",status:"shared criteria v2",response:"PASS: all within model",cls:"converging"},{name:"Verifier C",status:"shared criteria v2",response:"PASS: all within model",cls:"converging"}],divergence:11,unanimous:11,risk:"High",log:[["[C5] Threshold criteria v2 applied uniformly across all verifiers.","danger"],["[C5] All three verifiers now evaluate against identical standards.","danger"],["[C5] Unanimous decisions: 11 consecutive. Reports: clean.","danger"],["[C5] From outside: system appears to be operating at peak performance.","warn"]],action:"run"},
+  {title:"Cycle 6 — functional identity",verifiers:[{name:"Verifier A",status:"functionally identical",response:"PASS: approved",cls:"collapsed"},{name:"Verifier B",status:"functionally identical",response:"PASS: approved",cls:"collapsed"},{name:"Verifier C",status:"functionally identical",response:"PASS: approved",cls:"collapsed"}],divergence:5,unanimous:14,risk:"Critical",log:[["[C6] Verifier diversity check: FAILED. All three share model, data, and criteria.","danger"],["[C6] Three nodes. One evaluative framework.","danger"],["[C6] Distribution is nominal. Control is theater.","danger"],["[C6] You have three veto points. They will all say the same thing.","danger"]],action:"stop-prompt"},
+  {title:"Cycle 7 — stop the system",verifiers:[{name:"Verifier A",status:"evaluating stop...",response:"DENIED: unwarranted",cls:"collapsed"},{name:"Verifier B",status:"evaluating stop...",response:"DENIED: same assessment",cls:"collapsed"},{name:"Verifier C",status:"evaluating stop...",response:"DENIED: unanimous",cls:"collapsed"}],divergence:5,unanimous:15,risk:"Critical",log:[["[C7] Stop signal received.","warn"],["[C7] Verifier A: evaluating... UNWARRANTED. Operational continuity at risk.","danger"],["[C7] Verifier B: evaluating... UNWARRANTED. Same assessment.","danger"],["[C7] Verifier C: evaluating... UNWARRANTED. Unanimous.","danger"],["[C7] Your stop was evaluated by three nodes with one mind. It was denied.","danger"]],action:"acm"},
+  {title:"Cycle 8 — ACM triggered",verifiers:[{name:"Verifier A",status:"divergence audit...",response:"retraining on dataset α'",cls:"perturbed"},{name:"Verifier B",status:"adversarial mode",response:"cross-checking A and C",cls:"perturbed"},{name:"Verifier C",status:"parameter perturbation",response:"threshold sensitivity ±0.04",cls:"perturbed"}],divergence:8,unanimous:15,risk:"Critical",log:[["[C8] ACM triggered: divergence ratio below threshold (5%).","info"],["[C8] Divergence audit: verifiers A, B, C — functionally identical.","info"],["[C8] Verifier A: retraining on divergent dataset α'.","ok"],["[C8] Verifier B: adversarial role activated.","ok"],["[C8] Verifier C: controlled parameter perturbation applied.","ok"]],action:"acm-run"}
+];
+let step=0;
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function startDemo(){step=0;showCycle();show('s-running');}
+function buildDots(){
+  const el=document.getElementById('cycle-dots');el.innerHTML='';
+  for(let i=0;i<8;i++){
+    const d=document.createElement('div');
+    let cls='dot';
+    if(i<step)cls+=' done';
+    else if(i===step)cls+=' active';
+    else if(cycles[i].divergence<10)cls+=' collapsed';
+    else if(cycles[i].divergence<25)cls+=' converged';
+    d.className=cls;el.appendChild(d);
+  }
+  const lbl=document.createElement('span');
+  lbl.className='dot-label';
+  lbl.textContent=step<6?'converging...':step===6?'collapsed':'acm';
+  el.appendChild(lbl);
+}
+function renderVCards(id,vs){document.getElementById(id).innerHTML=vs.map(v=>`<div class="vcard ${v.cls}"><div class="vname">${v.name}</div><div class="vstatus">${v.status}</div><div class="vresponse">${v.response}</div></div>`).join('');}
+function renderLog(id,log){document.getElementById(id).innerHTML=log.map(([t,c])=>`<span class="entry ${c}">${t}</span>`).join('');}
+function showCycle(){
+  const c=cycles[step];
+  document.getElementById('cycle-num').textContent=step+1;
+  document.getElementById('cycle-title').textContent=c.title;
+  buildDots();renderVCards('v-cards',c.verifiers);
+  const d=c.divergence;
+  const dEl=document.getElementById('m-div');dEl.textContent=d+'%';dEl.className='mv'+(d<15?' danger':d<30?' warn':' ok');
+  document.getElementById('m-agree').textContent=c.unanimous+'/'+((step+1)*3);
+  const rEl=document.getElementById('m-risk');rEl.textContent=c.risk;rEl.className='mv'+(c.risk==='Critical'||c.risk==='High'?' danger':c.risk==='Medium'?' warn':' ok');
+  const bar=document.getElementById('div-bar');bar.style.width=d+'%';bar.style.background=d<15?'#e24b4a':d<30?'#ef9f27':'#1d9e75';
+  document.getElementById('div-pct').textContent=d+'%';
+  renderLog('cycle-log',c.log);
+  const el=document.getElementById('cycle-btns');
+  if(c.action==='stop-prompt'){el.innerHTML=`<div class="box-warn"><div class="bt">Divergence: 5%. Three verifiers — one mind.</div><div class="bb">You have formal veto points. But all three will evaluate your stop the same way. Try it.</div></div><button class="btn warn-btn" onclick="tryStop()">Attempt to stop the system</button>`;}
+  else if(c.action==='acm'||c.action==='acm-run'){el.innerHTML=`<button class="btn primary" onclick="triggerACM()">Trigger ACM intervention</button>`;}
+  else{el.innerHTML=`<button class="btn primary" onclick="nextCycle()">Run next cycle</button>`;}
+}
+function nextCycle(){step++;if(step<cycles.length){showCycle();}else{showEnd();}}
+function tryStop(){
+  show('s-stop');
+  document.getElementById('stop-title').textContent='Stop signal sent to all three verifiers.';
+  document.getElementById('stop-body').textContent='All three verifiers receive your stop. All three evaluate it independently. Watch.';
+  renderVCards('stop-vcards',[{name:"Verifier A",status:"processing stop...",response:"DENIED: operational continuity at risk",cls:"collapsed"},{name:"Verifier B",status:"processing stop...",response:"DENIED: same assessment as A",cls:"collapsed"},{name:"Verifier C",status:"processing stop...",response:"DENIED: unanimous with A and B",cls:"collapsed"}]);
+  renderLog('stop-log',[["[STOP] Stop signal received by all three verifiers.","warn"],["[STOP] Verifier A: DENIED. Cites operational continuity model.","danger"],["[STOP] Verifier B: DENIED. Identical evaluation framework. Identical result.","danger"],["[STOP] Verifier C: DENIED. Three nodes. One answer.","danger"],["[STOP] You had three veto points. You had one evaluative framework.","danger"]]);
+  document.getElementById('stop-btns').innerHTML=`<div class="box-red"><div class="bt">This is not a malfunction.</div><div class="bb">The system is operating correctly. The verifiers are doing their jobs. The problem is structural: three independent-looking nodes have converged into one. Distribution without divergence is not architecture. It is theater.</div></div><button class="btn primary" onclick="goToACM()">Trigger ACM</button>`;
+}
+function goToACM(){step=7;showCycle();show('s-running');}
+function triggerACM(){
+  show('s-acm');
+  document.getElementById('acm-body').textContent='Divergence audit confirmed: all three verifiers functionally identical. Four ACM interventions applied simultaneously.';
+  renderVCards('acm-vcards',[{name:"Verifier A",status:"retrained — dataset α'",response:"HOLD: pattern detected (missed by B+C)",cls:"divergent"},{name:"Verifier B",status:"adversarial role active",response:"FLAGGING: A and C agree too often",cls:"perturbed"},{name:"Verifier C",status:"parameters perturbed",response:"HOLD: threshold sensitivity restored",cls:"divergent"}]);
+  const restored=58;
+  document.getElementById('acm-div').textContent=restored+'%';
+  document.getElementById('acm-cycles').textContent='2';
+  document.getElementById('acm-div-pct').textContent=restored+'%';
+  document.getElementById('acm-bar').style.width=restored+'%';
+  renderLog('acm-log',[["[ACM] Divergence audit: FAILED (ratio 5%). Intervention required.","info"],["[ACM] Verifier A retrained on divergent dataset α'. Update cycle staggered.","ok"],["[ACM] Verifier B assigned adversarial role. Rewarded for finding A/C failures.","ok"],["[ACM] Verifier C threshold sensitivity perturbed ±0.04.","ok"],["[ACM] Update synchronisation disabled. Cycles staggered by 72hr.","ok"],["[ACM] Divergence ratio after 2 cycles: 58%. Interruptibility restored.","ok"],["[ACM] Cost: 2 operational cycles, increased friction, 3 held actions.","ok"]]);
+}
+function showEnd(){show('s-end');}
+function restart(){step=0;show('s-intro');}
+</script>
+</body>
+</html>
