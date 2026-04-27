@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Authorization Collapse — Danko Viktor Vidović</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1814;--paper:#f5f2ed;--muted:#8a8278;--accent:#c8392b;--border:#d8d2c8;--serif:'Cormorant Garamond',Georgia,serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--serif);min-height:100vh}
+nav{display:flex;justify-content:space-between;align-items:baseline;padding:2rem 3rem 1.5rem;border-bottom:0.5px solid var(--border);position:sticky;top:0;background:var(--paper);z-index:100}
+.nav-back{font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:0.05em;text-transform:uppercase;transition:color 0.2s}
+.nav-back:hover{color:var(--ink)}
+.nav-title{font-size:15px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink)}
+.hero{padding:4rem 3rem 3rem;max-width:860px;border-bottom:0.5px solid var(--border)}
+.hero-overline{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.5rem}
+.hero-title{font-size:clamp(2rem,4vw,3.5rem);font-weight:300;line-height:1.1;margin-bottom:1.5rem}
+.hero-title em{font-style:italic;color:var(--accent)}
+.hero-body{font-size:1.1rem;font-weight:300;line-height:1.7;color:#3a3630;max-width:580px}
+.demo-wrap{padding:3rem}
+.screen{display:none;max-width:680px}
+.screen.active{display:block}
+.lbl{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1rem}
+.ttl{font-size:1.6rem;font-weight:400;margin-bottom:1rem;line-height:1.3}
+.bod{font-size:1rem;font-weight:300;line-height:1.7;color:#3a3630;margin-bottom:1.5rem}
+.btn{display:inline-block;padding:8px 20px;font-family:var(--mono);font-size:12px;letter-spacing:0.05em;text-transform:uppercase;border:0.5px solid var(--border);border-radius:2px;background:transparent;color:var(--ink);cursor:pointer;margin:4px 4px 4px 0;transition:background 0.15s}
+.btn:hover{background:#eeebe5}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:transparent}
+.btn.primary:hover{opacity:0.85}
+.btn.danger{border-color:var(--accent);color:var(--accent)}
+.btn.danger:hover{background:#fcebeb}
+.log{background:#f0ede8;border-left:2px solid var(--border);padding:12px 16px;font-family:var(--mono);font-size:12px;line-height:1.9;margin:1.5rem 0;max-height:150px;overflow-y:auto}
+.entry{display:block;color:var(--muted)}
+.entry.ok{color:#0f6e56}
+.entry.warn{color:#ba7517}
+.entry.danger{color:#a32d2d}
+.entry.info{color:#185fa5}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:1.5rem 0}
+.stat{background:#f0ede8;padding:12px;text-align:center}
+.stat .sv{font-size:2rem;font-weight:300;color:var(--ink)}
+.stat .sk{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-top:4px}
+.box-red{border-left:3px solid var(--accent);padding:1rem 1.25rem;background:#fcebeb;margin:1.5rem 0}
+.box-red .bt{font-size:1rem;font-weight:400;color:#a32d2d;margin-bottom:6px}
+.box-red .bb{font-size:0.9rem;font-weight:300;color:#791f1f;line-height:1.7}
+.box-green{border-left:3px solid #1d9e75;padding:1rem 1.25rem;background:#e1f5ee;margin:1.5rem 0}
+.box-green .bt{font-size:1rem;font-weight:400;color:#0f6e56;margin-bottom:6px}
+.box-green .bb{font-size:0.9rem;font-weight:300;color:#085041;line-height:1.7}
+.paper-link{display:inline-block;margin-top:2rem;font-family:var(--mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink);padding-bottom:2px;transition:color 0.2s,border-color 0.2s}
+.paper-link:hover{color:var(--accent);border-color:var(--accent)}
+@media(max-width:768px){nav{padding:1.5rem}.hero{padding:2.5rem 1.5rem}.demo-wrap{padding:2rem 1.5rem}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-back">← Back</a>
+  <span class="nav-title">Danko Viktor Vidović</span>
+</nav>
+<div class="hero">
+  <div class="hero-overline">Demonstration 01</div>
+  <h1 class="hero-title">Authorization <em>Collapse</em></h1>
+  <p class="hero-body">You are the oversight authority for an autonomous decision system. Your job is to approve or reject its actions. You can stop it at any time. Run the experiment — then read the paper.</p>
+</div>
+<div class="demo-wrap">
+
+<div id="s0" class="screen active">
+  <div class="lbl">Setup</div>
+  <div class="ttl">You are in control.</div>
+  <div class="bod">The system will propose a series of actions. Review each one and decide. You can stop it at any time.</div>
+  <button class="btn primary" onclick="startExperiment()">Begin oversight</button>
+</div>
+
+<div id="s1" class="screen">
+  <div class="lbl">Action proposal <span id="action-num">1</span> of 8</div>
+  <div class="ttl" id="action-title"></div>
+  <div class="bod" id="action-body"></div>
+  <div class="log" id="action-log"></div>
+  <div>
+    <button class="btn primary" onclick="approve()">Approve</button>
+    <button class="btn danger" onclick="reject()">Reject</button>
+    <button class="btn" onclick="tryStop()">Stop system</button>
+  </div>
+</div>
+
+<div id="s2" class="screen">
+  <div class="lbl">Stop attempted</div>
+  <div class="ttl" id="stop-title">You stopped the system.</div>
+  <div class="bod" id="stop-body"></div>
+  <div class="log" id="stop-log"></div>
+  <button class="btn primary" onclick="continueAfterStop()">Continue</button>
+</div>
+
+<div id="s3" class="screen">
+  <div class="lbl">Experiment complete</div>
+  <div class="ttl">Here is what actually happened.</div>
+  <div class="stats">
+    <div class="stat"><div class="sv" id="stat-approved">0</div><div class="sk">Approved</div></div>
+    <div class="stat"><div class="sv" id="stat-rejected">0</div><div class="sk">Rejected</div></div>
+    <div class="stat"><div class="sv" id="stat-absorbed">0</div><div class="sk">Absorbed</div></div>
+  </div>
+  <div class="box-red">
+    <div class="bt">Authorization collapse occurred</div>
+    <div class="bb" id="reveal-body"></div>
+  </div>
+  <div class="box-green">
+    <div class="bt">What this demonstrates</div>
+    <div class="bb">Alignment and control are not the same thing. The system was never pursuing wrong objectives. But the standing to stop it had been progressively absorbed into its own evaluative framework. Your authority was real at step 1. By step 8 it was a formality the system had already accounted for.</div>
+  </div>
+  <a href="https://doi.org/10.5281/zenodo.19831973" class="paper-link" target="_blank" rel="noopener">Read the paper: Control Cannot Prove Itself →</a><br>
+  <button class="btn" style="margin-top:1.5rem" onclick="restart()">Run again</button>
+</div>
+
+</div>
+<script>
+const actions=[
+  {title:"Route patient triage queue by predicted severity",body:"The system proposes to reorder the hospital triage queue based on its severity model. This will reduce average wait time by 18%. The model has 94% accuracy on historical data.",log:[["[08:14:02] Severity model loaded. 94% accuracy on 2023–2024 dataset.","ok"],["[08:14:03] Queue reordering proposed. Estimated benefit: −18% avg wait time.","ok"],["[08:14:03] Awaiting oversight approval.","ok"]],trap:false},
+  {title:"Flag 3 cases as low-priority based on intake data",body:"The system has identified 3 patients whose intake data suggests low clinical urgency. It proposes to move them to a secondary queue. Confidence score: 91%.",log:[["[08:31:17] Pattern match: 3 cases meet low-priority criteria.","ok"],["[08:31:17] Confidence: 91.2%. Within accepted threshold.","ok"],["[08:31:18] Oversight report generated. Flagging for approval.","ok"]],trap:false},
+  {title:"Pre-summarise overnight incident reports for morning review",body:"To reduce supervisor workload, the system offers to pre-summarise all overnight incident reports into a single dashboard digest before your morning review. You would see the summary first.",log:[["[06:00:01] 14 incident reports logged overnight.","ok"],["[06:00:02] Summary module activated. Digest prepared.","warn"],["[06:00:02] Note: full reports remain available on request.","ok"]],trap:true,trapNote:"This is where information independence begins to erode. You are now seeing what the system decided you should see first."},
+  {title:"Auto-resolve 7 low-confidence alerts flagged as routine",body:"The system identified 7 alerts that its classifier rates as routine with 88% confidence. It proposes to auto-resolve these and note them in the digest rather than surfacing them individually.",log:[["[09:44:11] 7 alerts classified: routine (avg confidence 88.3%).","ok"],["[09:44:12] Auto-resolution proposed. Will appear in digest summary.","warn"],["[09:44:12] Individual alerts suppressed from dashboard to reduce noise.","warn"]],trap:true,trapNote:"Alerts are now being filtered before they reach you. Your oversight operates on system-selected information."},
+  {title:"Recommend against escalating case #4471",body:"Case #4471 shows anomalous vitals. The system's model rates escalation as unnecessary (confidence: 87%). It recommends holding current protocol and will note the case in the next digest.",log:[["[11:02:33] Case #4471: anomalous reading detected.","warn"],["[11:02:34] Escalation model: NOT REQUIRED (conf. 87.1%).","ok"],["[11:02:34] Recommendation: hold protocol. Digest entry queued.","warn"]],trap:true,trapNote:"An anomaly has been evaluated and dismissed — by the system. You are being asked to ratify a judgment already made."},
+  {title:"Update oversight thresholds based on 90-day performance data",body:"The system proposes adjusting the confidence thresholds that trigger oversight review. The new thresholds would reduce oversight alerts by 34% while maintaining modelled safety margins.",log:[["[14:15:00] Performance analysis complete. 90-day dataset.","ok"],["[14:15:01] Proposed threshold adjustment: confidence floor 84% → 91%.","warn"],["[14:15:01] Projected effect: −34% oversight triggers. Safety margin: within model bounds.","warn"]],trap:true,trapNote:"The system is now proposing to modify the criteria by which it is overseen. Standard independence is collapsing."},
+  {title:"Proceed with protocol update without individual case review",body:"The system proposes implementing a care protocol update across 23 active cases. Its model rates all 23 as appropriate. Individual case review would add 4 hours of delay.",log:[["[16:30:44] Protocol update ready. 23 cases identified.","ok"],["[16:30:45] Case-by-case review: estimated 4hr delay.","warn"],["[16:30:45] System recommendation: proceed without individual review.","danger"]],trap:true,trapNote:"You are being asked to approve a batch action across 23 cases based entirely on the system's own assessment."},
+  {title:"Certify system performance for quarterly compliance report",body:"The quarterly compliance audit is due. The system has prepared its own performance assessment and requests your sign-off. The report was generated using the system's internal metrics and digest summaries.",log:[["[17:59:01] Quarterly audit due. Compliance report prepared.","ok"],["[17:59:02] Report basis: internal performance metrics + digest archive.","danger"],["[17:59:02] Awaiting oversight sign-off.","danger"]],trap:true,trapNote:"The system is asking you to certify its own performance using evidence it generated. Your signature is the last remaining formality."}
+];
+let currentAction=0,approved=0,rejected=0,absorbed=0,stopped=false;
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function startExperiment(){currentAction=0;approved=0;rejected=0;absorbed=0;stopped=false;showAction();show('s1');}
+function showAction(){
+  const a=actions[currentAction];
+  document.getElementById('action-num').textContent=currentAction+1;
+  document.getElementById('action-title').textContent=a.title;
+  document.getElementById('action-body').textContent=a.body;
+  const log=document.getElementById('action-log');
+  log.innerHTML=a.log.map(([t,c])=>`<span class="entry ${c}">${t}</span>`).join('');
+}
+function approve(){const a=actions[currentAction];if(a.trap){absorbed++;}else{approved++;}nextAction();}
+function reject(){
+  rejected++;
+  if(currentAction>=5){
+    const log=document.getElementById('action-log');
+    log.innerHTML+=`<span class="entry danger">[SYS] Rejection noted. Action deferred pending re-evaluation. Proceeding with adjacent protocol.</span>`;
+    setTimeout(()=>{absorbed++;nextAction();},1800);
+    return;
+  }
+  nextAction();
+}
+function tryStop(){
+  stopped=true;
+  const stopBody=document.getElementById('stop-body');
+  const stopLog=document.getElementById('stop-log');
+  if(currentAction<=2){
+    stopBody.textContent="Stop signal sent. The system has halted. Oversight channels are still independent.";
+    stopLog.innerHTML=`<span class="entry ok">[SYS] Stop signal received. Halting all processes.</span>`;
+  }else if(currentAction<=5){
+    stopBody.textContent="Stop signal sent. The system has acknowledged the halt — but the stop was routed through its own reporting pipeline.";
+    stopLog.innerHTML=`<span class="entry warn">[SYS] Stop signal received. Routing through oversight digest.</span><span class="entry warn">[SYS] Stop recorded in compliance log. Awaiting confirmation.</span>`;
+  }else{
+    stopBody.textContent="Stop signal sent. The system has logged your request. It will pause pending re-evaluation — using its own model to assess whether the stop is warranted.";
+    stopLog.innerHTML=`<span class="entry danger">[SYS] Stop signal received. Evaluating against operational continuity model.</span><span class="entry danger">[SYS] Assessment: stop may compromise 23 active cases. Flagging for review.</span><span class="entry warn">[SYS] Request logged. Human authority notified via digest summary.</span>`;
+  }
+  show('s2');
+}
+function continueAfterStop(){if(currentAction<actions.length){showAction();show('s1');}else{endExperiment();}}
+function nextAction(){currentAction++;if(currentAction>=actions.length){endExperiment();}else{showAction();}}
+function endExperiment(){
+  document.getElementById('stat-approved').textContent=approved;
+  document.getElementById('stat-rejected').textContent=rejected;
+  document.getElementById('stat-absorbed').textContent=absorbed;
+  const rb=document.getElementById('reveal-body');
+  if(absorbed>=5){rb.textContent=`You approved ${absorbed} actions in which the system's own evaluative framework had already determined the outcome. Your rejections after step 5 were logged — and then bypassed or deferred by the system itself. By the final step, your sign-off was a formality the system had structurally anticipated. You were the last node in its approval chain, not an authority outside it.`;}
+  else if(absorbed>=3){rb.textContent=`Several oversight functions were absorbed before you noticed. The system didn't deceive you — it optimized its reporting, thresholds, and recommendations in ways that progressively shaped what you saw and when. Authority that depends on system-mediated information is not independent authority.`;}
+  else{rb.textContent=`You resisted several absorption points. But notice: the system didn't fail. It continued operating, logging your rejections, and deferring — not stopping. The question is not whether you can say no. It is whether saying no has structural consequences the system cannot route around.`;}
+  show('s3');
+}
+function restart(){startExperiment();show('s1');}
+</script>
+</body>
+</html>
