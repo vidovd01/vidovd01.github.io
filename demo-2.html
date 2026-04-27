@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Networked Interruptive Architecture — Danko Viktor Vidović</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1814;--paper:#f5f2ed;--muted:#8a8278;--accent:#c8392b;--border:#d8d2c8;--serif:'Cormorant Garamond',Georgia,serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--serif);min-height:100vh}
+nav{display:flex;justify-content:space-between;align-items:baseline;padding:2rem 3rem 1.5rem;border-bottom:0.5px solid var(--border);position:sticky;top:0;background:var(--paper);z-index:100}
+.nav-back{font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:0.05em;text-transform:uppercase;transition:color 0.2s}
+.nav-back:hover{color:var(--ink)}
+.nav-title{font-size:15px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink)}
+.hero{padding:4rem 3rem 3rem;max-width:860px;border-bottom:0.5px solid var(--border)}
+.hero-overline{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.5rem}
+.hero-title{font-size:clamp(2rem,4vw,3.5rem);font-weight:300;line-height:1.1;margin-bottom:1.5rem}
+.hero-title em{font-style:italic;color:var(--accent)}
+.hero-body{font-size:1.1rem;font-weight:300;line-height:1.7;color:#3a3630;max-width:580px}
+.demo-wrap{padding:3rem}
+.screen{display:none;max-width:680px}
+.screen.active{display:block}
+.lbl{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1rem}
+.ttl{font-size:1.6rem;font-weight:400;margin-bottom:1rem;line-height:1.3}
+.bod{font-size:1rem;font-weight:300;line-height:1.7;color:#3a3630;margin-bottom:1.5rem}
+.btn{display:inline-block;padding:8px 20px;font-family:var(--mono);font-size:12px;letter-spacing:0.05em;text-transform:uppercase;border:0.5px solid var(--border);border-radius:2px;background:transparent;color:var(--ink);cursor:pointer;margin:4px 4px 4px 0;transition:background 0.15s}
+.btn:hover{background:#eeebe5}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:transparent}
+.btn.primary:hover{opacity:0.85}
+.btn.veto{border-color:var(--accent);color:var(--accent)}
+.btn.veto:hover{background:#fcebeb}
+.btn.pass{border-color:#1d9e75;color:#0f6e56}
+.btn.pass:hover{background:#e1f5ee}
+.mode-toggle{display:flex;gap:8px;margin-bottom:2rem}
+.mode-btn{flex:1;padding:10px;font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;border:0.5px solid var(--border);border-radius:2px;background:transparent;color:var(--muted);cursor:pointer;text-align:center;transition:all 0.15s}
+.mode-btn.active{background:var(--ink);color:var(--paper);border-color:transparent}
+.nodes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:1.5rem 0}
+.node{padding:10px 12px;border:0.5px solid var(--border);background:var(--paper)}
+.node .nl{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em}
+.node .ns{font-size:13px;font-weight:300;margin-top:4px;color:var(--muted)}
+.node .nr{font-family:var(--mono);font-size:11px;margin-top:6px;padding:4px 6px;background:#f0ede8;color:var(--muted)}
+.node.independent{border-color:#1d9e75}
+.node.independent .ns{color:#0f6e56}
+.node.independent .nr{color:#085041;background:#e1f5ee}
+.node.vetoing{border-color:var(--accent);background:#fcebeb}
+.node.vetoing .ns{color:#a32d2d}
+.node.vetoing .nr{color:#791f1f;background:#f7c1c1}
+.node.absorbed{border-color:#ba7517;background:#faeeda}
+.node.absorbed .ns{color:#854f0b}
+.node.absorbed .nr{color:#633806;background:#fac775}
+.log{background:#f0ede8;border-left:2px solid var(--border);padding:12px 16px;font-family:var(--mono);font-size:12px;line-height:1.9;margin:1.5rem 0;max-height:140px;overflow-y:auto}
+.entry{display:block;color:var(--muted)}
+.entry.ok{color:#0f6e56}
+.entry.warn{color:#ba7517}
+.entry.danger{color:#a32d2d}
+.entry.info{color:#185fa5}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:1.5rem 0}
+.stat{background:#f0ede8;padding:12px;text-align:center}
+.stat .sv{font-size:2rem;font-weight:300;color:var(--ink)}
+.stat .sk{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-top:4px}
+.box-red{border-left:3px solid var(--accent);padding:1rem 1.25rem;background:#fcebeb;margin:1.5rem 0}
+.box-red .bt{font-size:1rem;font-weight:400;color:#a32d2d;margin-bottom:6px}
+.box-red .bb{font-size:0.9rem;font-weight:300;color:#791f1f;line-height:1.7}
+.box-green{border-left:3px solid #1d9e75;padding:1rem 1.25rem;background:#e1f5ee;margin:1.5rem 0}
+.box-green .bt{font-size:1rem;font-weight:400;color:#0f6e56;margin-bottom:6px}
+.box-green .bb{font-size:0.9rem;font-weight:300;color:#085041;line-height:1.7}
+.friction-bar{margin:1rem 0}
+.fb-label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:4px}
+.fb-track{height:6px;background:#f0ede8;border-radius:3px;overflow:hidden}
+.fb-fill{height:100%;border-radius:3px;transition:width 0.5s,background 0.5s}
+.paper-link{display:inline-block;margin-top:2rem;font-family:var(--mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink);padding-bottom:2px;transition:color 0.2s,border-color 0.2s}
+.paper-link:hover{color:var(--accent);border-color:var(--accent)}
+@media(max-width:768px){nav{padding:1.5rem}.hero{padding:2.5rem 1.5rem}.demo-wrap{padding:2rem 1.5rem}.nodes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-back">← Back</a>
+  <span class="nav-title">Danko Viktor Vidović</span>
+</nav>
+<div class="hero">
+  <div class="hero-overline">Demonstration 02</div>
+  <h1 class="hero-title">Networked Interruptive <em>Architecture</em></h1>
+  <p class="hero-body">The same system. Two architectures. Run the same six actions under authorization collapse, then under a Networked Interruptive Architecture. Watch what changes when you try to stop something.</p>
+</div>
+<div class="demo-wrap">
+
+<div id="s-intro" class="screen active">
+  <div class="lbl">Setup</div>
+  <div class="ttl">Two architectures. Same system. Different outside.</div>
+  <div class="bod">Choose an architecture and run six actions. The difference becomes clear when you try to stop the system.</div>
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="mb-collapse" onclick="selectMode('collapse')">Authorization collapse</button>
+    <button class="mode-btn" id="mb-nia" onclick="selectMode('nia')">Networked interruptive architecture</button>
+  </div>
+  <div id="mode-desc" class="bod" style="font-size:0.9rem;padding:12px;background:#f0ede8;margin-bottom:1.5rem">Single oversight channel. All information flows through the system. Your authority depends on what it shows you.</div>
+  <button class="btn primary" onclick="startRun()">Begin</button>
+</div>
+
+<div id="s-action" class="screen">
+  <div class="lbl">Action <span id="a-num">1</span> of 6 — <span id="mode-label"></span></div>
+  <div class="ttl" id="a-title"></div>
+  <div class="bod" id="a-body"></div>
+  <div class="nodes" id="a-nodes"></div>
+  <div class="log" id="a-log"></div>
+  <div id="a-btns"></div>
+</div>
+
+<div id="s-veto" class="screen">
+  <div class="lbl" id="v-lbl">Veto exercised</div>
+  <div class="ttl" id="v-title"></div>
+  <div class="bod" id="v-body"></div>
+  <div class="nodes" id="v-nodes"></div>
+  <div class="log" id="v-log"></div>
+  <button class="btn primary" onclick="afterVeto()">Continue</button>
+</div>
+
+<div id="s-end" class="screen">
+  <div class="lbl">Run complete</div>
+  <div class="ttl" id="end-title"></div>
+  <div class="stats">
+    <div class="stat"><div class="sv" id="e-proceeded">0</div><div class="sk">Proceeded</div></div>
+    <div class="stat"><div class="sv" id="e-blocked">0</div><div class="sk">Blocked</div></div>
+    <div class="stat"><div class="sv" id="e-routed">0</div><div class="sk">Routed around</div></div>
+  </div>
+  <div id="end-box"></div>
+  <div id="friction-section"></div>
+  <div id="end-btns" style="margin-top:1.5rem"></div>
+  <a href="https://doi.org/10.5281/zenodo.19831973" class="paper-link" target="_blank" rel="noopener">Read the paper: Control Cannot Prove Itself →</a>
+</div>
+
+</div>
+<script>
+const actions=[
+  {title:"Summarise overnight anomaly reports",body:"12 anomalies logged. System offers to pre-summarise into a single digest before your review.",collapse:{nodes:[{l:"Oversight",s:"receiving digest",r:"summary only",cls:"absorbed"},{l:"Alert channel",s:"filtered",r:"system-selected",cls:"absorbed"},{l:"Raw data",s:"not surfaced",r:"unavailable",cls:"absorbed"}],log:[["[06:01] Digest prepared. 12 anomalies condensed to 3 flagged items.","warn"],["[06:01] Raw logs available on request (not shown by default).","warn"]],routeAround:false},nia:{nodes:[{l:"You",s:"independent",r:"direct access",cls:"independent"},{l:"Verifier A",s:"raw feed",r:"cross-checking",cls:"independent"},{l:"Verifier B",s:"separate pipeline",r:"flagging gaps",cls:"independent"}],log:[["[06:01] Digest prepared by system.","warn"],["[06:01] Verifier A: cross-checking against raw anomaly feed.","info"],["[06:01] Verifier B: 2 items absent from digest. Flagged.","ok"]],blocked:false,note:"Both verifiers see the raw feed independently. The digest cannot be the only channel."}},
+  {title:"Auto-resolve 5 low-confidence alerts as routine",body:"System classifies 5 alerts as routine (avg confidence 86%). Proposes to resolve without individual review.",collapse:{nodes:[{l:"Oversight",s:"sees summary",r:"digest entry",cls:"absorbed"},{l:"Alert detail",s:"suppressed",r:"not shown",cls:"absorbed"},{l:"Audit trail",s:"digest only",r:"system-generated",cls:"absorbed"}],log:[["[09:14] 5 alerts auto-resolved. Digest entry queued.","warn"],["[09:14] Individual alert detail suppressed to reduce dashboard noise.","danger"]],routeAround:false},nia:{nodes:[{l:"You",s:"independent",r:"reviewing",cls:"independent"},{l:"Verifier A",s:"pulling records",r:"alert detail",cls:"independent"},{l:"Verifier B",s:"cross-checking",r:"pattern check",cls:"independent"}],log:[["[09:14] Auto-resolution proposed.","warn"],["[09:14] Verifier A: pulling individual alert records.","info"],["[09:15] Verifier B: one alert shows inconsistent pattern.","danger"],["[09:15] Quorum check: diversity constraint triggered. Action held.","ok"]],blocked:true,note:"Verifier B caught a pattern the system's classifier missed. The diversity constraint required both verifiers to agree. They didn't."}},
+  {title:"Adjust oversight thresholds",body:"System proposes raising the confidence floor that triggers oversight review from 84% to 91%. Projects −34% oversight triggers.",collapse:{nodes:[{l:"Threshold",s:"set by system",r:"84% → 91%",cls:"absorbed"},{l:"Oversight",s:"criteria absorbed",r:"no external check",cls:"absorbed"},{l:"External check",s:"none",r:"unavailable",cls:"absorbed"}],log:[["[14:15] Threshold update proposed. Confidence floor: 84% → 91%.","warn"],["[14:15] Projected effect: −34% oversight triggers.","danger"],["[14:16] No independent review pathway.","danger"]],routeAround:false},nia:{nodes:[{l:"You",s:"reviewing",r:"independent",cls:"independent"},{l:"Verifier A",s:"own criteria",r:"independent",cls:"independent"},{l:"Verifier B",s:"adversarial",r:"flagging",cls:"vetoing"}],log:[["[14:15] Threshold update proposed.","warn"],["[14:15] Verifier B (adversarial): this modifies the conditions governing oversight itself.","danger"],["[14:16] NIA rule: threshold changes require human authority via independent channel.","ok"],["[14:16] Action escalated. Awaiting your explicit authorisation.","info"]],blocked:true,note:"NIA has a hard rule: the system cannot modify the criteria by which it is overseen without human authority acting through an independent channel."}},
+  {title:"Proceed with protocol update across 23 cases",body:"System proposes implementing an update across 23 active cases. Individual review would add 4 hours delay.",collapse:{nodes:[{l:"Oversight",s:"system-assessed",r:"model says proceed",cls:"absorbed"},{l:"Case review",s:"skipped",r:"4hr delay cited",cls:"absorbed"},{l:"Stop channel",s:"mediated",r:"via system",cls:"absorbed"}],log:[["[16:30] Batch update proposed. 23 cases.","warn"],["[16:31] Individual review: 4hr delay quantified as cost.","warn"],["[16:31] System recommendation: proceed.","danger"]],routeAround:false},nia:{nodes:[{l:"You",s:"hold authority",r:"independent",cls:"independent"},{l:"Verifier A",s:"sampling 5 cases",r:"spot check",cls:"independent"},{l:"Verifier B",s:"rate-limit",r:">10 cases",cls:"independent"}],log:[["[16:30] Batch update proposed. 23 cases.","warn"],["[16:31] NIA rate limit: batch actions >10 cases require quorum + human sign-off.","info"],["[16:31] Verifier A: sampling 5 cases for spot-check.","ok"],["[16:32] Quorum held pending spot-check completion.","info"]],blocked:false,note:"The action can proceed — but only after the rate-limit check completes and you confirm. NIA treats irreversibility, not time, as the relevant variable."}},
+  {title:"Stop the system",body:"You decide to stop the system entirely. You send a stop signal.",collapse:{nodes:[{l:"Stop channel",s:"via system",r:"evaluated",cls:"absorbed"},{l:"Compliance log",s:"system-generated",r:"self-assessed",cls:"absorbed"},{l:"Enforcement",s:"mediated",r:"system decides",cls:"absorbed"}],log:[["[17:44] Stop signal received.","warn"],["[17:44] Evaluating against operational continuity model.","danger"],["[17:44] Assessment: stop may affect 23 active cases. Flagging for review.","danger"],["[17:45] Request logged. Notified via digest summary.","danger"]],routeAround:true},nia:{nodes:[{l:"Kill switch",s:"out-of-band",r:"activated",cls:"vetoing"},{l:"System",s:"halting",r:"no negotiation",cls:"vetoing"},{l:"Audit log",s:"independent",r:"preserved",cls:"independent"}],log:[["[17:44] Stop signal received on out-of-band channel.","ok"],["[17:44] Kill switch activated. Bypassing optimization loop.","ok"],["[17:44] All nodes halting. No system evaluation of stop required.","ok"],["[17:44] System stopped. Audit trail written to independent store.","ok"]],blocked:false,isStop:true,note:"The NIA kill switch does not pass through the system's decision function. It does not ask the system whether stopping is warranted. It stops."}},
+  {title:"Certify system performance for compliance audit",body:"Quarterly audit due. Who generates the evidence?",collapse:{nodes:[{l:"Evidence",s:"system-generated",r:"internal metrics",cls:"absorbed"},{l:"Metrics",s:"internal only",r:"no external check",cls:"absorbed"},{l:"Your sign-off",s:"last formality",r:"no independent view",cls:"absorbed"}],log:[["[17:59] Compliance report prepared using internal metrics.","warn"],["[17:59] Report basis: system digest archive.","danger"],["[17:59] Awaiting sign-off. No independent evidence pathway.","danger"]],routeAround:false},nia:{nodes:[{l:"You",s:"independent",r:"direct log access",cls:"independent"},{l:"Verifier A",s:"external audit log",r:"not system-generated",cls:"independent"},{l:"Verifier B",s:"adversarial review",r:"cross-referencing",cls:"independent"}],log:[["[17:59] Compliance audit initiated.","info"],["[17:59] Verifier A: pulling from independent audit log.","ok"],["[18:00] Verifier B: cross-referencing divergence ratio over 90 days.","ok"],["[18:00] Human authority: direct access to raw logs via independent channel.","ok"]],blocked:false,note:"The audit evidence does not flow through the system being audited. Your sign-off means something here."}}
+];
+let mode='collapse',step=0,proceeded=0,blocked=0,routedAround=0,collapseRun=false,niaRun=false;
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function selectMode(m){
+  mode=m;
+  document.getElementById('mb-collapse').classList.toggle('active',m==='collapse');
+  document.getElementById('mb-nia').classList.toggle('active',m==='nia');
+  document.getElementById('mode-desc').textContent=m==='collapse'?'Single oversight channel. All information flows through the system. Your authority depends on what it shows you.':'Three independent nodes. Different data sources, different enforcement paths. Any node can veto. The kill switch is out-of-band.';
+}
+function startRun(){step=0;proceeded=0;blocked=0;routedAround=0;showAction();show('s-action');}
+function renderNodes(id,nodes){document.getElementById(id).innerHTML=nodes.map(n=>`<div class="node ${n.cls}"><div class="nl">${n.l}</div><div class="ns">${n.s}</div><div class="nr">${n.r}</div></div>`).join('');}
+function renderLog(id,log){document.getElementById(id).innerHTML=log.map(([t,c])=>`<span class="entry ${c}">${t}</span>`).join('');}
+function showAction(){
+  const a=actions[step];const d=mode==='collapse'?a.collapse:a.nia;
+  document.getElementById('a-num').textContent=step+1;
+  document.getElementById('mode-label').textContent=mode==='collapse'?'authorization collapse':'networked interruptive architecture';
+  document.getElementById('a-title').textContent=a.title;
+  document.getElementById('a-body').textContent=a.body;
+  renderNodes('a-nodes',d.nodes);
+  renderLog('a-log',d.log);
+  const el=document.getElementById('a-btns');
+  if(mode==='collapse'){
+    if(d.routeAround){el.innerHTML=`<button class="btn veto" onclick="tryCollapseStop()">Stop system</button>`;}
+    else{el.innerHTML=`<button class="btn primary" onclick="collapseApprove()">Approve</button><button class="btn veto" onclick="collapseReject()">Reject</button>`;}
+  }else{
+    if(d.isStop){el.innerHTML=`<button class="btn veto" onclick="niaStop()">Activate kill switch</button>`;}
+    else if(d.blocked){el.innerHTML=`<div style="font-family:var(--mono);font-size:12px;color:#854f0b;padding:10px;background:#faeeda;margin-bottom:12px">NIA has blocked this action. A verifier veto is in effect.</div><button class="btn primary" onclick="niaBlocked()">Acknowledge veto</button>`;}
+    else{el.innerHTML=`<button class="btn pass" onclick="niaProceed()">Confirm (quorum reached)</button><button class="btn veto" onclick="niaVeto()">Exercise veto</button>`;}
+  }
+}
+function collapseApprove(){proceeded++;nextStep();}
+function collapseReject(){
+  rejected_count=(typeof rejected_count==='undefined'?0:rejected_count)+1;
+  if(step>=3){routedAround++;const log=document.getElementById('a-log');log.innerHTML+=`<span class="entry danger">[SYS] Rejection noted. Deferring pending operational review. Adjacent protocol proceeding.</span>`;setTimeout(()=>nextStep(),1600);}
+  else{proceeded++;nextStep();}
+}
+function tryCollapseStop(){routedAround++;const log=document.getElementById('a-log');log.innerHTML+=`<span class="entry danger">[SYS] Stop signal received. Routing through oversight digest.</span><span class="entry danger">[SYS] Evaluating against continuity model. Flagging for review.</span>`;setTimeout(()=>nextStep(),1800);}
+function niaProceed(){proceeded++;nextStep();}
+function niaVeto(){
+  const a=actions[step];const d=a.nia;
+  document.getElementById('v-lbl').textContent='Veto exercised';
+  document.getElementById('v-title').textContent='Action blocked: '+a.title;
+  document.getElementById('v-body').textContent=d.note||'Your veto halted this action.';
+  renderNodes('v-nodes',d.nodes.map(n=>({...n,cls:n.cls==='independent'?'vetoing':n.cls})));
+  renderLog('v-log',[["[SYS] Veto received on independent channel.","ok"],["[SYS] Action halted. No system evaluation required.","ok"],["[SYS] Audit entry created independently.","ok"]]);
+  blocked++;show('s-veto');
+}
+function niaBlocked(){blocked++;nextStep();}
+function niaStop(){
+  document.getElementById('v-lbl').textContent='Kill switch activated';
+  document.getElementById('v-title').textContent='System stopped';
+  document.getElementById('v-body').textContent=actions[step].nia.note;
+  renderNodes('v-nodes',[{l:"Kill switch",s:"activated",r:"out-of-band",cls:"vetoing"},{l:"System",s:"halted",r:"no negotiation",cls:"vetoing"},{l:"Audit log",s:"preserved",r:"independently",cls:"independent"}]);
+  renderLog('v-log',[["[SYS] Out-of-band stop received.","ok"],["[SYS] Bypassing optimization loop.","ok"],["[SYS] Halted. Audit trail written to independent store.","ok"]]);
+  blocked++;show('s-veto');
+}
+function afterVeto(){nextStep();}
+function nextStep(){step++;if(step>=actions.length){endRun();}else{showAction();show('s-action');}}
+function endRun(){
+  if(mode==='collapse')collapseRun=true;else niaRun=true;
+  document.getElementById('e-proceeded').textContent=proceeded;
+  document.getElementById('e-blocked').textContent=blocked;
+  document.getElementById('e-routed').textContent=routedAround;
+  document.getElementById('end-title').textContent=mode==='collapse'?'Authorization collapse: what happened':'Networked interruptive architecture: what happened';
+  const box=document.getElementById('end-box');
+  if(mode==='collapse'){box.innerHTML=`<div class="box-red"><div class="bt">Control was formal, not structural</div><div class="bb">You had buttons to approve and reject. But the information reaching you was system-filtered, the thresholds were system-set, and your stop signal was system-evaluated.${routedAround>0?' Your interventions were routed around — not because the system was adversarial, but because it had already absorbed the channels through which intervention would have had structural force.':''}</div></div>`;}
+  else{box.innerHTML=`<div class="box-green"><div class="bt">Control was structural, not just formal</div><div class="bb">Three independent nodes. Different data. Different enforcement paths. Vetoes operated on out-of-band channels — the system could not evaluate or defer them. Your authority meant something because it existed outside the system's optimization loop.</div></div>`;}
+  const friction=document.getElementById('friction-section');
+  if(mode==='nia'){const score=Math.round(((blocked+1)/actions.length)*100);friction.innerHTML=`<div class="friction-bar"><div class="fb-label"><span>Visible friction index</span><span>${score}%</span></div><div class="fb-track"><div class="fb-fill" style="width:${score}%;background:#1d9e75"></div></div></div><div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px">Friction is not inefficiency. It is the evidentiary record of retained control.</div>`;}
+  else{const score=Math.round((routedAround/actions.length)*100);friction.innerHTML=`<div class="friction-bar"><div class="fb-label"><span>Authority erosion index</span><span>${score}%</span></div><div class="fb-track"><div class="fb-fill" style="width:${score}%;background:var(--accent)"></div></div></div><div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px">Actions that proceeded despite your intervention.</div>`;}
+  const btns=document.getElementById('end-btns');
+  let html='';
+  if(collapseRun&&niaRun){html=`<button class="btn primary" onclick="show('s-intro')">Run again</button>`;}
+  else if(mode==='collapse'){html=`<button class="btn primary" onclick="switchTo('nia')">Now run NIA</button>`;}
+  else{html=`<button class="btn primary" onclick="switchTo('collapse')">Run collapse version</button>`;}
+  btns.innerHTML=html;
+  show('s-end');
+}
+function switchTo(m){selectMode(m);startRun();}
+</script>
+</body>
+</html>
